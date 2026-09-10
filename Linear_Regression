@@ -1,0 +1,108 @@
+# linear regression models
+
+# library(ISLR)
+library(MASS)
+dim(Boston)
+head(Boston) # Data about 506 neighborhood around Boston
+
+# medv: median housing value
+# rm: average number of rooms per house
+# age: average age of houses
+# lstat: percent of households with low socioeconomic status
+
+pairs(Boston[,c("medv","rm","age","lstat")])
+
+lm.fit <- lm(medv~lstat, data=Boston)      # LS estimation
+summary(lm.fit)
+
+newX <- data.frame(lstat=c(5,10,15))
+predict(object=lm.fit, newdata=newX)
+predict(object=lm.fit, newdata=newX, interval="confidence")       # Confidence interval for E(Y|X)
+predict(lm.fit, newdata=newX, interval="prediction")              # Prediction interval for Y
+
+plot(Boston$lstat,Boston$medv, pch=20)
+abline(lm.fit,col="red",lwd=3, lty=5)
+
+newX2 <- 1:30
+pred1 <- predict(object=lm.fit, newdata=data.frame(lstat=newX2), interval="confidence")
+
+lines(newX2, pred1[,2],col="blue",lwd=3, lty=2)
+lines(newX2, pred1[,3],col="blue",lwd=3, lty=2)
+
+pred2 <- predict(lm.fit, newdata=data.frame(lstat=newX2), interval="prediction")
+
+lines(newX2, pred2[,2],col="green",lwd=3, lty=2)
+lines(newX2, pred2[,3],col="green",lwd=3, lty=2)
+#
+
+# Multiple Linear Regression                     # You can add additional predictors in the lm() function
+
+lm.fit <- lm(medv~lstat+age, data=Boston)
+summary(lm.fit)
+
+# Interaction Terms
+lm.fit1 <- lm(medv~lstat*age, data=Boston)   # Y = b0 + b1*lstat + b2*age + b3*lstat*age + e
+                                             # marginal effect of age: b2+b3*lstat
+summary(lm.fit1)  # How to interpret the result? As a house is newer, the negative effect of lstat is more.
+                  # As lstat is higher, the age of house affects the price less negatively. 
+lm.fit2 <- lm(medv~lstat+age+lstat:age, data=Boston)
+summary(lm.fit2)
+
+predict(object=lm.fit1,newdata=data.frame(lstat=c(5,10,15),age=c(5,10,20)), interval="prediction")
+#
+
+# Polynomial model
+
+lm.fit <- lm(medv~lstat, data=Boston)
+
+Boston$lstat2 <- (Boston$lstat)^2
+qd.fit3 <- lm(medv~lstat+lstat2, data=Boston)
+#qd.fit5 <- lm(medv~lstat+lstat^2, data=Boston)  # does not work
+qd.fit4 <- lm(medv~lstat+I(lstat^2), data=Boston)
+qd.fit <- lm(medv~poly(lstat,2), data=Boston)
+summary(qd.fit3)
+summary(qd.fit4)
+summary(qd.fit)    # The results from lm.fit are different from the ones from lm.fit3 and from lm.fit4
+                    # But, you will see that the prediction results are the same.
+
+newX <- data.frame(lstat=c(5,10,15))
+predict(object=qd.fit4, newdata=newX)
+predict(object=qd.fit, newdata=newX)
+
+cb.fit <- lm(medv~poly(lstat,3), data=Boston)
+summary(cb.fit)
+
+hi.fit <- lm(medv~poly(lstat,15), data=Boston)
+summary(hi.fit)
+#
+
+x.min <- min(Boston$lstat)
+x.max <- max(Boston$lstat)
+
+x.range <- data.frame(lstat=seq(x.min,x.max,0.1))
+
+yhat.cb <- predict(object=cb.fit, newdata=x.range)
+yhat.hi <- predict(object=hi.fit, newdata=x.range)
+#
+plot(Boston$lstat,Boston$medv, pch=20)
+abline(lm.fit,col="red",lwd=3, lty=5)
+lines(seq(x.min,x.max,0.1),yhat.cb,col="blue",lwd=3, lty=2)
+lines(seq(x.min,x.max,0.1),yhat.hi,col="green",lwd=3, lty=10)
+#
+
+#  Exercise: 
+# 1. Download the housing dataset from HuskyCT (or https://www.kaggle.com/harlfoxem/housesalesprediction)
+#    and run a regression to predict housing prices. 
+
+# 2. Build a model to predict the housing price given characteristics of a house in the dataset.
+#    Consider the following predictors:
+#    
+#    season, sqft_living, age = 2021 - yr_built, interaction of sqft_living and age, and waterfront
+
+#    Create a variable "season" which equals 
+#    "Winter" if a house was sold in Jan, Feb, Mar, Dec.
+#    "Spring" if it was sold in Apr, May, Jun
+#    "Summer" if it was sold in Jul, Aug
+#    "Fall" if it was sold in Sep, Oct, Nov.
+#    Do you find any seasonality in housing price?
+# 3. Pridict the housing price when season = spring, sqft_living=2500, age=20, waterfront=0.
